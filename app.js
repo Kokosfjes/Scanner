@@ -53,12 +53,26 @@ const formats = [
 ];
 
 const scanConfig = {
-  fps: 12,
+  fps: 25,
   qrbox: (w, h) => {
-    const side = Math.floor(Math.min(w, h) * 0.7);
-    return { width: side, height: Math.floor(side * 0.65) };
+    const side = Math.floor(Math.min(w, h) * 0.75);
+    return { width: side, height: Math.floor(side * 0.55) };
   },
   disableFlip: false,
+  experimentalFeatures: {
+    useBarCodeDetectorIfSupported: true,
+  },
+};
+
+const cameraConstraints = {
+  facingMode: "environment",
+  width: { ideal: 1920 },
+  height: { ideal: 1080 },
+  focusMode: "continuous",
+  advanced: [
+    { focusMode: "continuous" },
+    { zoom: 1.5 },
+  ],
 };
 
 const scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
@@ -100,19 +114,25 @@ async function closeScanView() {
 async function startScanner() {
   if (isRunning) return;
   try {
-    await scanner.start({ facingMode: "environment" }, scanConfig, onScanSuccess, () => {});
+    await scanner.start(cameraConstraints, scanConfig, onScanSuccess, () => {});
     isRunning = true;
   } catch (err1) {
-    console.warn("environment facingMode failed, trying camera list fallback", err1);
+    console.warn("detailed constraints failed, trying basic environment", err1);
     try {
-      const cameras = await Html5Qrcode.getCameras();
-      if (!cameras.length) throw new Error("Ingen kameraer funnet");
-      const back = cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[cameras.length - 1];
-      await scanner.start(back.id, scanConfig, onScanSuccess, () => {});
+      await scanner.start({ facingMode: "environment" }, scanConfig, onScanSuccess, () => {});
       isRunning = true;
     } catch (err2) {
-      console.error("Camera start failed", err2);
-      closeScanView();
+      console.warn("facingMode failed, trying camera list fallback", err2);
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras.length) throw new Error("Ingen kameraer funnet");
+        const back = cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[cameras.length - 1];
+        await scanner.start(back.id, scanConfig, onScanSuccess, () => {});
+        isRunning = true;
+      } catch (err3) {
+        console.error("Camera start failed", err3);
+        closeScanView();
+      }
     }
   }
 }
