@@ -245,6 +245,134 @@
   }
   .manual button:active { background: #262b36; }
 
+  .list-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .list-buttons button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.9rem;
+    background: #14171e;
+    border: 1px solid #23272f;
+    border-radius: 10px;
+    color: #e8eaed;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: left;
+  }
+  .list-buttons button:active { background: #1c2028; }
+  .list-buttons .lbl { font-weight: 500; }
+  .list-buttons .count {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    color: #8a8f98;
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+  }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal.open { display: flex; }
+  .modal-box {
+    background: #14171e;
+    border: 1px solid #2a2f3a;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .modal h2 {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal .close {
+    background: none;
+    border: none;
+    color: #8a8f98;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    line-height: 1;
+    font-family: inherit;
+  }
+  #list-search {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+    background: #0d1016;
+    border: 1px solid #23272f;
+    border-radius: 8px;
+    color: #e8eaed;
+    font-family: inherit;
+  }
+  #list-search:focus { outline: none; border-color: #3b82f6; }
+  #list-summary {
+    font-size: 0.75rem;
+    color: #8a8f98;
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  #list-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  #list-items li {
+    padding: 0.65rem 0.8rem;
+    background: #0d1016;
+    border: 1px solid #1e222b;
+    border-radius: 8px;
+    margin-bottom: 0.4rem;
+  }
+  #list-items li .name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #list-items li .nr {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.75rem;
+    color: #8a8f98;
+    margin-top: 0.15rem;
+  }
+  #list-items:empty::before {
+    content: "Ingen å vise";
+    display: block;
+    color: #5b616b;
+    font-style: italic;
+    text-align: center;
+    padding: 1.5rem;
+  }
+
   /* ---------- SCAN VIEW ---------- */
   #view-scan {
     position: fixed;
@@ -361,6 +489,16 @@
         <input type="text" inputmode="numeric" id="manual-input" placeholder="Eller tast inn nummer…" />
         <button type="submit">OK</button>
       </form>
+      <div class="list-buttons">
+        <button type="button" id="btn-show-used">
+          <span class="lbl">Sjekket inn</span>
+          <span class="count" id="count-used">–</span>
+        </button>
+        <button type="button" id="btn-show-unused">
+          <span class="lbl">Ikke sjekket inn</span>
+          <span class="count" id="count-unused">–</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -368,6 +506,15 @@
     <button id="btn-back">← Tilbake</button>
     <div id="reader"></div>
     <div id="scan-overlay"></div>
+  </div>
+
+  <div id="list-modal" class="modal">
+    <div class="modal-box">
+      <h2><span id="list-modal-title">Liste</span><button class="close" data-close>×</button></h2>
+      <input type="search" id="list-search" placeholder="Søk navn eller nummer…" />
+      <div id="list-summary"></div>
+      <ul id="list-items"></ul>
+    </div>
   </div>
 
   <script type="module" src="app.js"></script>
