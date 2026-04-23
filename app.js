@@ -133,9 +133,11 @@ async function onScanSuccess(decodedText) {
 }
 
 async function processCode(value, { fromScan = false } = {}) {
-  const now = Date.now();
-  if (now - lastScanTime < SCAN_COOLDOWN_MS) return;
-  lastScanTime = now;
+  if (fromScan) {
+    const now = Date.now();
+    if (now - lastScanTime < SCAN_COOLDOWN_MS) return;
+    lastScanTime = now;
+  }
 
   let verdict;
   let name = null;
