@@ -1,0 +1,12 @@
+{
+  "name": "qr-code-skanner",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "import": "node import.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
