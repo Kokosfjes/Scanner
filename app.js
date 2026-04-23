@@ -64,8 +64,19 @@ const scanConfig = {
 const scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
 let isRunning = false;
 
+const formManual = document.getElementById("form-manual");
+const manualInput = document.getElementById("manual-input");
+
 btnScan.addEventListener("click", openScanView);
 btnBack.addEventListener("click", closeScanView);
+formManual.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const value = manualInput.value.trim();
+  if (!value) return;
+  manualInput.blur();
+  await processCode(value, { fromScan: false });
+  manualInput.value = "";
+});
 
 async function openScanView() {
   viewHub.classList.remove("active");
@@ -118,6 +129,10 @@ async function stopScanner() {
 }
 
 async function onScanSuccess(decodedText) {
+  await processCode(decodedText, { fromScan: true });
+}
+
+async function processCode(value, { fromScan = false } = {}) {
   const now = Date.now();
   if (now - lastScanTime < SCAN_COOLDOWN_MS) return;
   lastScanTime = now;
@@ -126,7 +141,7 @@ async function onScanSuccess(decodedText) {
   let name = null;
 
   try {
-    const result = await claimCode(decodedText);
+    const result = await claimCode(value);
     verdict = result.verdict;
     name = result.name;
   } catch (err) {
@@ -139,19 +154,24 @@ async function onScanSuccess(decodedText) {
   statOk.textContent = counts.ok;
   statBad.textContent = counts.bad;
 
-  updateHubResult(verdict, decodedText, name);
-  showOverlay(verdict, name);
-  flashScanView(verdict);
+  updateHubResult(verdict, value, name);
+
+  if (fromScan) {
+    showOverlay(verdict, name);
+    flashScanView(verdict);
+  }
 
   if (navigator.vibrate) {
     navigator.vibrate(verdict === VERDICT.OK ? 80 : [60, 60, 60]);
   }
 
-  if (autoReturnTimer) clearTimeout(autoReturnTimer);
-  autoReturnTimer = setTimeout(() => {
-    autoReturnTimer = null;
-    closeScanView();
-  }, AUTO_RETURN_MS);
+  if (fromScan) {
+    if (autoReturnTimer) clearTimeout(autoReturnTimer);
+    autoReturnTimer = setTimeout(() => {
+      autoReturnTimer = null;
+      closeScanView();
+    }, AUTO_RETURN_MS);
+  }
 }
 
 async function claimCode(value) {

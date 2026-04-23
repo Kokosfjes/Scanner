@@ -212,6 +212,39 @@
     box-shadow: 0 3px 14px rgba(59, 130, 246, 0.3);
   }
 
+  .manual {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .manual input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    background: #14171e;
+    border: 1px solid #23272f;
+    border-radius: 10px;
+    color: #e8eaed;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  .manual input:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+  .manual button {
+    padding: 0 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: #1e222b;
+    border: 1px solid #2a2f3a;
+    color: #e8eaed;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .manual button:active { background: #262b36; }
+
   /* ---------- SCAN VIEW ---------- */
   #view-scan {
     position: fixed;
@@ -324,6 +357,10 @@
         <div class="stat bad"><div class="num" id="stat-bad">0</div><div class="lbl">Avvist</div></div>
       </div>
       <button id="btn-scan">SKANN</button>
+      <form id="form-manual" class="manual" autocomplete="off">
+        <input type="text" inputmode="numeric" id="manual-input" placeholder="Eller tast inn nummer…" />
+        <button type="submit">OK</button>
+      </form>
     </div>
   </div>
 
