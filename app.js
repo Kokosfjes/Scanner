@@ -118,13 +118,11 @@ async function startScanner() {
     isRunning = true;
   } catch (err1) {
     console.warn("detailed constraints failed, trying basic environment", err1);
-    try { await scanner.clear(); } catch (_) {}
     try {
       await scanner.start({ facingMode: "environment" }, scanConfig, onScanSuccess, () => {});
       isRunning = true;
     } catch (err2) {
       console.warn("facingMode failed, trying camera list fallback", err2);
-      try { await scanner.clear(); } catch (_) {}
       try {
         const cameras = await Html5Qrcode.getCameras();
         if (!cameras.length) throw new Error("Ingen kameraer funnet");
@@ -133,6 +131,7 @@ async function startScanner() {
         isRunning = true;
       } catch (err3) {
         console.error("Camera start failed", err3);
+        alert("Kamera kunne ikke åpnes: " + (err3?.message ?? err3));
         closeScanView();
       }
     }
