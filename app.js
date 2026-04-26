@@ -329,19 +329,27 @@ listModal.addEventListener("click", (e) => {
 });
 listSearch.addEventListener("input", renderList);
 
-subscribeCounts();
+try {
+  subscribeCounts();
+} catch (e) {
+  console.error("subscribeCounts threw:", e);
+  countUsedEl.textContent = "!";
+  countUnusedEl.textContent = "!";
+}
 
 function subscribeCounts() {
+  console.log("subscribeCounts starting, db:", db, "fs.onSnapshot:", typeof fs.onSnapshot);
   fs.onSnapshot(
     fs.collection(db, "registered"),
     (snap) => {
+      console.log("count snapshot fired, size:", snap.size);
       let used = 0, unused = 0;
       snap.forEach((d) => { d.data().used === true ? used++ : unused++; });
       countUsedEl.textContent = used;
       countUnusedEl.textContent = unused;
     },
     (err) => {
-      console.error("count subscribe failed", err);
+      console.error("count subscribe failed:", err.code, err.message);
       countUsedEl.textContent = "?";
       countUnusedEl.textContent = "?";
     }
