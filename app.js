@@ -64,19 +64,14 @@ const scanConfig = {
   },
 };
 
-const cameraConstraints = {
-  facingMode: "environment",
-  width: { ideal: 1920 },
-  height: { ideal: 1080 },
-  focusMode: "continuous",
-  advanced: [
-    { focusMode: "continuous" },
-    { zoom: 1.5 },
-  ],
-};
-
-const scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
+let scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
 let isRunning = false;
+
+async function freshScanner() {
+  try { await scanner.stop(); } catch (_) {}
+  try { await scanner.clear(); } catch (_) {}
+  scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
+}
 
 const formManual = document.getElementById("form-manual");
 const manualInput = document.getElementById("manual-input");
@@ -113,27 +108,28 @@ async function closeScanView() {
 
 async function startScanner() {
   if (isRunning) return;
+
+  // Attempt 1: standard environment camera
   try {
-    await scanner.start(cameraConstraints, scanConfig, onScanSuccess, () => {});
+    await scanner.start({ facingMode: "environment" }, scanConfig, onScanSuccess, () => {});
     isRunning = true;
+    return;
   } catch (err1) {
-    console.warn("detailed constraints failed, trying basic environment", err1);
-    try {
-      await scanner.start({ facingMode: "environment" }, scanConfig, onScanSuccess, () => {});
-      isRunning = true;
-    } catch (err2) {
-      console.warn("facingMode failed, trying camera list fallback", err2);
-      try {
-        const cameras = await Html5Qrcode.getCameras();
-        if (!cameras.length) throw new Error("Ingen kameraer funnet");
-        const back = cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[cameras.length - 1];
-        await scanner.start(back.id, scanConfig, onScanSuccess, () => {});
-        isRunning = true;
-      } catch (err3) {
-        console.error("Camera start failed", err3);
-        closeScanView();
-      }
-    }
+    console.warn("facingMode start failed, trying camera ID fallback", err1);
+  }
+
+  // Attempt 2: enumerate cameras and start by ID (fresh instance to clear bad state)
+  await freshScanner();
+  try {
+    const cameras = await Html5Qrcode.getCameras();
+    if (!cameras.length) throw new Error("Ingen kameraer funnet");
+    const back = cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[cameras.length - 1];
+    await scanner.start(back.id, scanConfig, onScanSuccess, () => {});
+    isRunning = true;
+  } catch (err2) {
+    console.error("Camera start failed", err2);
+    alert("Kamera kunne ikke åpnes: " + (err2?.message ?? err2));
+    closeScanView();
   }
 }
 
