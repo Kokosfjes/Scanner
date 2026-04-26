@@ -305,3 +305,117 @@ function flashScanView(verdict) {
   void viewScan.offsetWidth;
   viewScan.classList.add(isOk ? "flash-ok" : "flash-bad");
 }
+
+// ---------- Lister ----------
+
+const btnShowUsed = document.getElementById("btn-show-used");
+const btnShowUnused = document.getElementById("btn-show-unused");
+const countUsedEl = document.getElementById("count-used");
+const countUnusedEl = document.getElementById("count-unused");
+const listModal = document.getElementById("list-modal");
+const listModalTitle = document.getElementById("list-modal-title");
+const listSearch = document.getElementById("list-search");
+const listSummary = document.getElementById("list-summary");
+const listItems = document.getElementById("list-items");
+
+let listUnsub = null;
+let listRows = [];
+let listMode = null;
+
+btnShowUsed.addEventListener("click", () => openListModal("used"));
+btnShowUnused.addEventListener("click", () => openListModal("unused"));
+listModal.addEventListener("click", (e) => {
+  if (e.target === listModal || e.target.dataset.close !== undefined) closeListModal();
+});
+listSearch.addEventListener("input", renderList);
+
+subscribeCounts();
+
+function subscribeCounts() {
+  fs.onSnapshot(
+    fs.collection(db, "registered"),
+    (snap) => {
+      let used = 0, unused = 0;
+      snap.forEach((d) => { d.data().used === true ? used++ : unused++; });
+      countUsedEl.textContent = used;
+      countUnusedEl.textContent = unused;
+    },
+    (err) => {
+      console.error("count subscribe failed", err);
+      countUsedEl.textContent = "?";
+      countUnusedEl.textContent = "?";
+    }
+  );
+}
+
+function openListModal(mode) {
+  listMode = mode;
+  listRows = [];
+  listSearch.value = "";
+  listModalTitle.textContent = mode === "used" ? "Sjekket inn" : "Ikke sjekket inn";
+  listSummary.textContent = "Laster…";
+  listItems.innerHTML = "";
+  listModal.classList.add("open");
+  subscribeList(mode);
+}
+
+function closeListModal() {
+  listModal.classList.remove("open");
+  if (listUnsub) { listUnsub(); listUnsub = null; }
+}
+
+function subscribeList(mode) {
+  if (listUnsub) listUnsub();
+  const q = fs.query(
+    fs.collection(db, "registered"),
+    fs.where("used", "==", mode === "used")
+  );
+  listUnsub = fs.onSnapshot(
+    q,
+    (snap) => {
+      listRows = [];
+      snap.forEach((d) => {
+        const data = d.data();
+        listRows.push({
+          code: d.id,
+          name: data.name ?? "(uten navn)",
+          usedAt: data.usedAt?.toDate?.() ?? null,
+        });
+      });
+      if (mode === "used") {
+        listRows.sort((a, b) => (b.usedAt?.getTime() ?? 0) - (a.usedAt?.getTime() ?? 0));
+      } else {
+        listRows.sort((a, b) => a.name.localeCompare(b.name, "nb"));
+      }
+      renderList();
+    },
+    (err) => {
+      console.error("list subscribe failed", err);
+      listSummary.textContent = "Feil: " + err.message;
+    }
+  );
+}
+
+function renderList() {
+  const filter = listSearch.value.trim().toLowerCase();
+  const rows = filter
+    ? listRows.filter((r) => r.name.toLowerCase().includes(filter) || r.code.includes(filter))
+    : listRows;
+  listSummary.textContent = `${rows.length} person${rows.length !== 1 ? "er" : ""}${filter ? ` av ${listRows.length}` : ""}`;
+  listItems.innerHTML = "";
+  for (const r of rows) {
+    const li = document.createElement("li");
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "name";
+    nameEl.textContent = r.name;
+
+    const nrEl = document.createElement("div");
+    nrEl.className = "nr";
+    nrEl.textContent = r.code + (listMode === "used" && r.usedAt ? " · " + r.usedAt.toLocaleTimeString() : "");
+
+    li.appendChild(nameEl);
+    li.appendChild(nrEl);
+    listItems.appendChild(li);
+  }
+}
