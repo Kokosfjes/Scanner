@@ -64,13 +64,23 @@ const scanConfig = {
   },
 };
 
-let scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
+let scanner = new Html5Qrcode("reader", {
+  formatsToSupport: formats,
+  verbose: false,
+});
 let isRunning = false;
 
 async function freshScanner() {
-  try { await scanner.stop(); } catch (_) {}
-  try { await scanner.clear(); } catch (_) {}
-  scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
+  try {
+    await scanner.stop();
+  } catch (_) {}
+  try {
+    await scanner.clear();
+  } catch (_) {}
+  scanner = new Html5Qrcode("reader", {
+    formatsToSupport: formats,
+    verbose: false,
+  });
 }
 
 const formManual = document.getElementById("form-manual");
@@ -111,7 +121,12 @@ async function startScanner() {
 
   // Attempt 1: standard environment camera
   try {
-    await scanner.start({ facingMode: "environment" }, scanConfig, onScanSuccess, () => {});
+    await scanner.start(
+      { facingMode: "environment" },
+      scanConfig,
+      onScanSuccess,
+      () => {},
+    );
     isRunning = true;
     return;
   } catch (err1) {
@@ -123,7 +138,9 @@ async function startScanner() {
   try {
     const cameras = await Html5Qrcode.getCameras();
     if (!cameras.length) throw new Error("Ingen kameraer funnet");
-    const back = cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[cameras.length - 1];
+    const back =
+      cameras.find((c) => /back|rear|environment/i.test(c.label)) ??
+      cameras[cameras.length - 1];
     await scanner.start(back.id, scanConfig, onScanSuccess, () => {});
     isRunning = true;
   } catch (err2) {
@@ -157,11 +174,13 @@ async function processCode(value, { fromScan = false } = {}) {
 
   let verdict;
   let name = null;
+  let approvedAt = null;
 
   try {
     const result = await claimCode(value);
     verdict = result.verdict;
     name = result.name;
+    approvedAt = result.usedAt ?? (verdict === VERDICT.OK ? new Date() : null);
   } catch (err) {
     console.error(err);
     verdict = VERDICT.ERROR;
@@ -172,7 +191,7 @@ async function processCode(value, { fromScan = false } = {}) {
   statOk.textContent = counts.ok;
   statBad.textContent = counts.bad;
 
-  updateHubResult(verdict, value, name);
+  updateHubResult(verdict, value, name, approvedAt);
 
   if (fromScan) {
     showOverlay(verdict, name);
@@ -202,7 +221,11 @@ async function claimCode(value) {
     const data = snap.data();
     const name = data.name ?? "(uten navn)";
     if (data.used === true) {
-      return { verdict: VERDICT.DUPLICATE, name };
+      return {
+        verdict: VERDICT.DUPLICATE,
+        name,
+        usedAt: data.usedAt?.toDate?.() ?? null,
+      };
     }
     tx.update(regRef, {
       used: true,
@@ -226,7 +249,7 @@ function verdictSubLabel(verdict) {
   return null;
 }
 
-function updateHubResult(verdict, value, name) {
+function updateHubResult(verdict, value, name, approvedAt = null) {
   const isOk = verdict === VERDICT.OK;
   document.body.classList.remove("result-ok", "result-bad");
   document.body.classList.add(isOk ? "result-ok" : "result-bad");
@@ -261,10 +284,12 @@ function updateHubResult(verdict, value, name) {
   val.textContent = value;
   resultEl.appendChild(val);
 
-  const time = document.createElement("div");
-  time.className = "meta";
-  time.textContent = new Date().toLocaleTimeString();
-  resultEl.appendChild(time);
+  if (approvedAt) {
+    const time = document.createElement("div");
+    time.className = "meta";
+    time.textContent = "Godkjent: " + approvedAt.toLocaleTimeString();
+    resultEl.appendChild(time);
+  }
 }
 
 function showOverlay(verdict, name) {
@@ -325,7 +350,8 @@ let listMode = null;
 btnShowUsed.addEventListener("click", () => openListModal("used"));
 btnShowUnused.addEventListener("click", () => openListModal("unused"));
 listModal.addEventListener("click", (e) => {
-  if (e.target === listModal || e.target.dataset.close !== undefined) closeListModal();
+  if (e.target === listModal || e.target.dataset.close !== undefined)
+    closeListModal();
 });
 listSearch.addEventListener("input", renderList);
 
@@ -338,13 +364,21 @@ try {
 }
 
 function subscribeCounts() {
-  console.log("subscribeCounts starting, db:", db, "fs.onSnapshot:", typeof fs.onSnapshot);
+  console.log(
+    "subscribeCounts starting, db:",
+    db,
+    "fs.onSnapshot:",
+    typeof fs.onSnapshot,
+  );
   fs.onSnapshot(
     fs.collection(db, "registered"),
     (snap) => {
       console.log("count snapshot fired, size:", snap.size);
-      let used = 0, unused = 0;
-      snap.forEach((d) => { d.data().used === true ? used++ : unused++; });
+      let used = 0,
+        unused = 0;
+      snap.forEach((d) => {
+        d.data().used === true ? used++ : unused++;
+      });
       countUsedEl.textContent = used;
       countUnusedEl.textContent = unused;
     },
@@ -352,7 +386,7 @@ function subscribeCounts() {
       console.error("count subscribe failed:", err.code, err.message);
       countUsedEl.textContent = "?";
       countUnusedEl.textContent = "?";
-    }
+    },
   );
 }
 
@@ -360,7 +394,8 @@ function openListModal(mode) {
   listMode = mode;
   listRows = [];
   listSearch.value = "";
-  listModalTitle.textContent = mode === "used" ? "Sjekket inn" : "Ikke sjekket inn";
+  listModalTitle.textContent =
+    mode === "used" ? "Sjekket inn" : "Ikke sjekket inn";
   listSummary.textContent = "Laster…";
   listItems.innerHTML = "";
   listModal.classList.add("open");
@@ -369,14 +404,17 @@ function openListModal(mode) {
 
 function closeListModal() {
   listModal.classList.remove("open");
-  if (listUnsub) { listUnsub(); listUnsub = null; }
+  if (listUnsub) {
+    listUnsub();
+    listUnsub = null;
+  }
 }
 
 function subscribeList(mode) {
   if (listUnsub) listUnsub();
   const q = fs.query(
     fs.collection(db, "registered"),
-    fs.where("used", "==", mode === "used")
+    fs.where("used", "==", mode === "used"),
   );
   listUnsub = fs.onSnapshot(
     q,
@@ -391,7 +429,9 @@ function subscribeList(mode) {
         });
       });
       if (mode === "used") {
-        listRows.sort((a, b) => (b.usedAt?.getTime() ?? 0) - (a.usedAt?.getTime() ?? 0));
+        listRows.sort(
+          (a, b) => (b.usedAt?.getTime() ?? 0) - (a.usedAt?.getTime() ?? 0),
+        );
       } else {
         listRows.sort((a, b) => a.name.localeCompare(b.name, "nb"));
       }
@@ -400,14 +440,16 @@ function subscribeList(mode) {
     (err) => {
       console.error("list subscribe failed", err);
       listSummary.textContent = "Feil: " + err.message;
-    }
+    },
   );
 }
 
 function renderList() {
   const filter = listSearch.value.trim().toLowerCase();
   const rows = filter
-    ? listRows.filter((r) => r.name.toLowerCase().includes(filter) || r.code.includes(filter))
+    ? listRows.filter(
+        (r) => r.name.toLowerCase().includes(filter) || r.code.includes(filter),
+      )
     : listRows;
   listSummary.textContent = `${rows.length} person${rows.length !== 1 ? "er" : ""}${filter ? ` av ${listRows.length}` : ""}`;
   listItems.innerHTML = "";
@@ -420,7 +462,11 @@ function renderList() {
 
     const nrEl = document.createElement("div");
     nrEl.className = "nr";
-    nrEl.textContent = r.code + (listMode === "used" && r.usedAt ? " · " + r.usedAt.toLocaleTimeString() : "");
+    nrEl.textContent =
+      r.code +
+      (listMode === "used" && r.usedAt
+        ? " · " + r.usedAt.toLocaleTimeString()
+        : "");
 
     li.appendChild(nameEl);
     li.appendChild(nrEl);
