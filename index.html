@@ -1,56 +1,77 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Scanner</title>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="index.css">
-</head>
-<body>
-  <div id="view-hub" class="view active">
-    <div class="wrap">
-      <h1>Scanner</h1>
-      <div id="result" class="empty">
-        <div class="verdict">Ingen skann ennå</div>
-      </div>
-      <div class="stats">
-        <div class="stat ok"><div class="num" id="stat-ok">0</div><div class="lbl">Godkjent</div></div>
-        <div class="stat bad"><div class="num" id="stat-bad">0</div><div class="lbl">Avvist</div></div>
-      </div>
-      <button id="btn-scan">SKANN</button>
-      <form id="form-manual" class="manual" autocomplete="off">
-        <input type="text" inputmode="numeric" id="manual-input" placeholder="Eller tast inn nummer…" />
-        <button type="submit">OK</button>
-      </form>
-      <div class="list-buttons">
-        <button type="button" id="btn-show-used">
-          <span class="lbl">Sjekket inn</span>
-          <span class="count" id="count-used">–</span>
-        </button>
-        <button type="button" id="btn-show-unused">
-          <span class="lbl">Ikke sjekket inn</span>
-          <span class="count" id="count-unused">–</span>
-        </button>
-      </div>
-    </div>
-  </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <title>Scanner</title>
+        <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+        <link rel="stylesheet" href="index.css" />
+    </head>
+    <body>
+        <div id="view-hub" class="view active">
+            <div class="wrap">
+                <h1>Scanner</h1>
+                <div id="result" class="empty">
+                    <div class="verdict">Ingen scan ennå</div>
+                </div>
+                <div class="stats">
+                    <div class="stat ok">
+                        <div class="num" id="stat-ok">0</div>
+                        <div class="lbl">Godkjent</div>
+                    </div>
+                    <div class="stat bad">
+                        <div class="num" id="stat-bad">0</div>
+                        <div class="lbl">Avvist</div>
+                    </div>
+                </div>
+                <button id="btn-scan">SKANN</button>
+                <form id="form-manual" class="manual" autocomplete="off">
+                    <input
+                        type="text"
+                        inputmode="numeric"
+                        id="manual-input"
+                        placeholder="Eller tast inn nummer…"
+                    />
+                    <button type="submit">OK</button>
+                </form>
+                <div class="list-buttons">
+                    <button type="button" id="btn-show-used">
+                        <span class="lbl">Sjekket inn</span>
+                        <span class="count" id="count-used">–</span>
+                    </button>
+                    <button type="button" id="btn-show-unused">
+                        <span class="lbl">Ikke sjekket inn</span>
+                        <span class="count" id="count-unused">–</span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
-  <div id="view-scan" class="view">
-    <button id="btn-back">← Tilbake</button>
-    <div id="reader"></div>
-    <div id="scan-overlay"></div>
-  </div>
+        <div id="view-scan" class="view">
+            <button id="btn-back">← Tilbake</button>
+            <div id="reader"></div>
+            <div id="scan-overlay"></div>
+        </div>
 
-  <div id="list-modal" class="modal">
-    <div class="modal-box">
-      <h2><span id="list-modal-title">Liste</span><button class="close" data-close>×</button></h2>
-      <input type="search" id="list-search" placeholder="Søk navn eller nummer…" />
-      <div id="list-summary"></div>
-      <ul id="list-items"></ul>
-    </div>
-  </div>
+        <div id="list-modal" class="modal">
+            <div class="modal-box">
+                <h2>
+                    <span id="list-modal-title">Liste</span
+                    ><button class="close" data-close>×</button>
+                </h2>
+                <input
+                    type="search"
+                    id="list-search"
+                    placeholder="Søk navn eller nummer…"
+                />
+                <div id="list-summary"></div>
+                <ul id="list-items"></ul>
+            </div>
+        </div>
 
-  <script type="module" src="app.js"></script>
-</body>
+        <script type="module" src="app.js"></script>
+    </body>
 </html>

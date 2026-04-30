@@ -1,4 +1,6 @@
 service-account.json
+firebase-config.js
+.claude/
 *.csv
 *.xlsx
 *.xls
